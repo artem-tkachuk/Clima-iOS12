@@ -29,11 +29,14 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate, Change
     @IBOutlet weak var weatherIcon: UIImageView!
     @IBOutlet weak var cityLabel: UILabel!
     @IBOutlet weak var temperatureLabel: UILabel!
-
+    @IBOutlet weak var scale: UISwitch!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        //set scale to Celsius by default
+        scale.setOn(false, animated: false)
         
         //TODO:Set up the location manager here.
         locationManager.delegate = self
@@ -48,6 +51,26 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate, Change
     }
     
     
+    //MARK: - Changing the scale
+    /***************************************************************/
+    
+    @IBAction func userChangedScale(_ sender: Any) {
+        scale.setOn(scale.isOn, animated: true)   //update the toggle. isOn has updated value!
+        
+        let currentTemp = weatherDataModel.temperature
+        
+        weatherDataModel.temperature = updateTemperature(scale: scale, temp: currentTemp)
+        
+        updateUIWithWeatherData()       //apply changes
+    }
+    
+    
+    func updateTemperature(scale: UISwitch, temp: Double) -> (Double) {
+        if scale.isOn {
+            return 1.8 * Double(temp) + Double(32)    //if Fahrenheit is wanted
+        }
+        return Double(temp  - 32) / 1.8        //to Celsius
+    }
     
     //MARK: - Networking
     /***************************************************************/
@@ -80,8 +103,14 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate, Change
         //NOT force unwrapping, but optional binding instead
         if let temp = json["main"]["temp"].double {
             
-            // converting to Celcius
-            weatherDataModel.temperature = Int(temp - 273.15)
+            // converting to Celcius or 
+            var temperature = temp - 273.15
+            
+            if scale.isOn { //if the city was changed while Fahrenheit was on
+                temperature = 1.8 * temperature + 32
+            }
+            
+            weatherDataModel.temperature = temperature
             
             weatherDataModel.city = json["name"].stringValue
             
@@ -107,7 +136,7 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate, Change
     
     func updateUIWithWeatherData() {
         cityLabel.text = String(weatherDataModel.city)
-        temperatureLabel.text = "\(weatherDataModel.temperature)°"
+        temperatureLabel.text = "\(Int(weatherDataModel.temperature))°"
         weatherIcon.image = UIImage(named: weatherDataModel.weatherIconName)
     }
     
