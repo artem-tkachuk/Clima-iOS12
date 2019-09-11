@@ -3,12 +3,14 @@
 //  WeatherApp
 //
 //  Created by Angela Yu on 23/08/2015.
+//  Edited by Artem Tkachuk on 10.09.2019
 //  Copyright (c) 2015 London App Brewery. All rights reserved.
 //
 
 import UIKit
 import CoreLocation
 import Alamofire
+import SwiftyJSON
 
 class WeatherViewController: UIViewController, CLLocationManagerDelegate {
     
@@ -34,8 +36,10 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
         
         //TODO:Set up the location manager here.
         locationManager.delegate = self
+        
         //get location data best for the job, meaning we want less battery use and quick result
         locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        
         //get permission from the user to get location data when the app is in use
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
@@ -49,6 +53,18 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
     
     //Write the getWeatherData method here:
     
+    func getWeatherData(url : String, parameters : [String: String]) {
+        Alamofire.request(url, method: .get, parameters: parameters).responseJSON {
+            response in
+            if response.result.isSuccess {
+                print("Success! Got the weather data!")
+                print(response)
+            } else {
+                print("Error \(response.result.error)")
+                self.cityLabel.text = "Connection issues"
+            }
+        }
+    }
 
     
     
@@ -91,6 +107,8 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
             let longitude = String(location.coordinate.longitude)
             
             let params: [String: String] = ["lat": latitude, "lon": longitude, "appid": APP_ID]
+            
+            getWeatherData(url: WEATHER_URL, parameters: params)
         }
     }
     
@@ -98,7 +116,7 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
     //Write the didFailWithError method here:
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print(error)
-        cityLabel.text = "Location unavailable"
+        cityLabel.text = "Loc. unavailable"
     }
     
     
