@@ -7,18 +7,19 @@
 //
 
 import UIKit
+import CoreLocation
+import Alamofire
 
-
-class WeatherViewController: UIViewController {
+class WeatherViewController: UIViewController, CLLocationManagerDelegate {
     
     //Constants
     let WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather"
-    let APP_ID = "e72ca729af228beabd5d20e3b7749713"
+    let APP_ID = "d83fa7e532f123de191764c7c185a6a6"
     /***Get your own App ID at https://openweathermap.org/appid ****/
     
 
     //TODO: Declare instance variables here
-    
+    let locationManager = CLLocationManager()
 
     
     //Pre-linked IBOutlets
@@ -32,8 +33,12 @@ class WeatherViewController: UIViewController {
         
         
         //TODO:Set up the location manager here.
-    
-        
+        locationManager.delegate = self
+        //get location data best for the job, meaning we want less battery use and quick result
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        //get permission from the user to get location data when the app is in use
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
         
     }
     
@@ -76,11 +81,25 @@ class WeatherViewController: UIViewController {
     
     
     //Write the didUpdateLocations method here:
-    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let location = locations[locations.count - 1]   //get last location received, the most accurate
+        if location.horizontalAccuracy > 0 {            //check whether the location is valid
+            locationManager.stopUpdatingLocation()      //stop updating the location to save user's battery!
+            print("longitude = \(location.coordinate.longitude), latitude = \(location.coordinate.latitude)")
+            
+            let latitude = String(location.coordinate.latitude)
+            let longitude = String(location.coordinate.longitude)
+            
+            let params: [String: String] = ["lat": latitude, "lon": longitude, "appid": APP_ID]
+        }
+    }
     
     
     //Write the didFailWithError method here:
-    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print(error)
+        cityLabel.text = "Location unavailable"
+    }
     
     
 
